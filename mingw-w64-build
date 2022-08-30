@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (C) 2021 Kyle Schwarz <zeranoe@gmail.com>, Toni Uhlig <matzeton@googlemail.com>
+# Copyright (C) 2022 Kyle Schwarz <zeranoe@gmail.com>, Toni Uhlig <matzeton@googlemail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@
 ROOT_PATH="$HOME/.mingw-w64-build-ng"
 
 MINGW_W64_BRANCH="v9.x"
-BINUTILS_BRANCH="binutils-2_37-branch"
-GCC_BRANCH="releases/gcc-11"
+BINUTILS_BRANCH="binutils-2_39-branch"
+GCC_BRANCH="releases/gcc-12"
 
 USE_TARBALL_RELEASES=1
 
@@ -35,6 +35,8 @@ GCC_TARBALL_SHA512="155535da34c74467e5d041fc6a79f5f102c30a7808b929a880dc33baae48
 ENABLE_THREADS="--enable-threads=posix"
 
 JOB_COUNT=$(($(getconf _NPROCESSORS_ONLN) + 2))
+
+LINKED_RUNTIME="msvcrt"
 
 show_help()
 {
@@ -58,6 +60,7 @@ Options:
   --gcc-branch <branch>        NOT RECOMMENDED - set GCC branch (default: $GCC_BRANCH)
   --mingw-w64-branch <branch>  NOT RECOMMENDED - set MinGW-w64 branch (default: $MINGW_W64_BRANCH)
   --force-git                  NOT RECOMMENDED - force git clone (default: disabled)
+  --linked-runtime <runtime>   set MinGW Linked Runtime (default: $LINKED_RUNTIME)
 EOF
 }
 
@@ -230,7 +233,8 @@ build()
 
     execute "($arch): configuring MinGW-w64 headers" "" \
         "$SRC_PATH/mingw-w64/mingw-w64-headers/configure" --build="$BUILD" \
-            --host="$host" --prefix="$prefix/$host"
+            --host="$host" --prefix="$prefix/$host" \
+            --with-default-msvcrt=$LINKED_RUNTIME
 
     execute "($arch): installing MinGW-w64 headers" "" \
         make install
@@ -255,6 +259,7 @@ build()
     execute "($arch): configuring MinGW-w64 CRT" "" \
         "$SRC_PATH/mingw-w64/mingw-w64-crt/configure" --build="$BUILD" \
             --host="$host" --prefix="$prefix/$host" \
+            --with-default-msvcrt=$LINKED_RUNTIME \
             --with-sysroot="$prefix/$host" $crt_lib
 
     execute "($arch): building MinGW-w64 CRT" "" \
@@ -368,6 +373,20 @@ while :; do
             ;;
         --gcc-branch=)
             arg_error "'--gcc-branch' requires a non-empty option argument"
+            ;;
+        --linked-runtime)
+            if [ "$2" ]; then
+                LINKED_RUNTIME="$2"
+                shift
+            else
+                arg_error "'--linked-runtime' requires a non-empty option argument"
+            fi
+            ;;
+        --linked-runtime=?*)
+            LINKED_RUNTIME=${1#*=}
+            ;;
+        --linked-runtime=)
+            arg_error "'--linked-runtime' requires a non-empty option argument"
             ;;
         --mingw-w64-branch)
             USE_TARBALL_RELEASES=0
