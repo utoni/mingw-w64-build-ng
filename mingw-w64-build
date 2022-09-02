@@ -61,7 +61,7 @@ Options:
   --mingw-w64-branch <branch>  NOT RECOMMENDED - set MinGW-w64 branch (default: $MINGW_W64_BRANCH)
   --force-git                  NOT RECOMMENDED - force git clone (default: disabled)
   --linked-runtime <runtime>   set MinGW Linked Runtime (default: $LINKED_RUNTIME)
-  --tarball <path>             generate a toolchain tarball
+  --tarball <path>             generate a toolchain tarball archive (bzip2 compressed)
 EOF
 }
 

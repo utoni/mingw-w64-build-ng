@@ -1,0 +1,51 @@
+name: Build
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+  release:
+    types: [created]
+  schedule:
+    - cron: "0 13 * * 1"
+
+jobs:
+  test:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: ["ubuntu-latest", "ubuntu-18.04"]
+        include:
+          - compiler: "default-cc"
+            os: "ubuntu-latest"
+          - compiler: "gcc-7"
+            os: "ubuntu-latest"
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: Install Ubuntu Prerequisites
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install autoconf automake cmake libtool pkg-config gettext flex bison
+          sudo apt-get install ${{ matrix.compiler }} lcov
+      - name: Build
+        run: |
+          ./mingw-w64-build --jobs 8 --keep-artifacts --tarball ./mingw-w64-toolchain.tbz2 i686 x86_64
+      - name: SHA512
+        run: |
+          sha512sum -b ./mingw-w64-toolchain.tbz2 >./mingw-w64-toolchain.tbz2.sha512
+      - uses: actions/upload-artifact@v2
+        with:
+          name: mingw-w64-toolchain
+          path: |
+            ./mingw-w64-toolchain.tbz2
+            ./mingw-w64-toolchain.tbz2.sha512
+          retention-days: 7
