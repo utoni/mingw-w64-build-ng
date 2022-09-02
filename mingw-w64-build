@@ -61,6 +61,7 @@ Options:
   --mingw-w64-branch <branch>  NOT RECOMMENDED - set MinGW-w64 branch (default: $MINGW_W64_BRANCH)
   --force-git                  NOT RECOMMENDED - force git clone (default: disabled)
   --linked-runtime <runtime>   set MinGW Linked Runtime (default: $LINKED_RUNTIME)
+  --tarball <path>             generate a toolchain tarball
 EOF
 }
 
@@ -407,6 +408,14 @@ while :; do
         --force-git)
             USE_TARBALL_RELEASES=0
             ;;
+        --tarball)
+            if [ "$2" ]; then
+                TARBALL=$(realpath "$2")
+                shift
+            else
+                arg_error "'--tarball' requires a non-empty option argument"
+            fi
+            ;;
         i686)
             BUILD_I686=1
             ;;
@@ -450,7 +459,7 @@ if [ "$MISSING_EXECS" ]; then
     error_exit "missing required executable(s):$MISSING_EXECS"
 fi
 
-TOTAL_STEPS=1
+TOTAL_STEPS=0
 
 if [ "${USE_TARBALL_RELEASES}" -ne 0 ]; then
     TOTAL_STEPS=$((TOTAL_STEPS + 6))
@@ -475,6 +484,10 @@ if [ "$BUILD_I686" ] && [ "$BUILD_X86_64" ]; then
     BUILD_STEPS=26
 else
     BUILD_STEPS=13
+fi
+
+if [ ! -z "${TARBALL}" ]; then
+    TOTAL_STEPS=$((TOTAL_STEPS + 1))
 fi
 
 TOTAL_STEPS=$((TOTAL_STEPS + THREADS_STEPS + BUILD_STEPS))
@@ -527,6 +540,17 @@ if [ ! "$KEEP_ARTIFACTS" ]; then
     remove_path "$LOG_FILE"
 fi
 
-printf "%s\n" "$COMPLETE_MSG"
+if [ ! -z ${TARBALL} ]; then
+    if [ "$BUILD_I686" ]; then
+        TAR_DIRS="i686"
+    fi
+    if [ "$BUILD_X86_64" ]; then
+        TAR_DIRS="${TAR_DIRS} x86_64"
+    fi
+    execute "generating tarball ${TARBALL}" "" \
+        cd ${ROOT_PATH} && tar --transform "s,^,mingw-w64-sysroot/," -cjf ${TARBALL} ${TAR_DIRS}
+fi
+
+printf "(%d/%d): %s\n" "$CURRENT_STEP" "$TOTAL_STEPS" "$COMPLETE_MSG"
 
 exit 0
