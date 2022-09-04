@@ -2,6 +2,7 @@ image: debian:stable
 
 stages:
   - build
+  - activate
 
 before_script:
   - export DEBIAN_FRONTEND=noninteractive
@@ -29,6 +30,13 @@ build:
   script:
     - ./mingw-w64-build --jobs 8 --keep-artifacts --tarball ./x86_64-w64-mingw32-toolchain.tbz2 x86_64
     - sha512sum -b ./x86_64-w64-mingw32-toolchain.tbz2 >./x86_64-w64-mingw32-toolchain.tbz2.sha512
+    - mkdir tmp
+    - cd tmp
+    - tar -xjf ../x86_64-w64-mingw32-toolchain.tbz2
+    - cd ..
+    - source ./tmp/mingw-w64-sysroot/activate.sh
+    - x86_64-w64-mingw32-gcc -v
+    - x86_64-w64-mingw32-g++ -v
   artifacts:
     expire_in: 1 week
     paths:

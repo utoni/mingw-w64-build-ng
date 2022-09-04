@@ -42,6 +42,15 @@ jobs:
       - name: SHA512
         run: |
           sha512sum -b ./mingw-w64-toolchain.tbz2 >./mingw-w64-toolchain.tbz2.sha512
+      - name: Activate
+        run: |
+          mkdir tmp
+          cd tmp
+          tar -xjf ../mingw-w64-toolchain.tbz2
+          cd ..
+          source ./tmp/mingw-w64-sysroot/activate.sh
+          x86_64-w64-mingw32-gcc -v
+          x86_64-w64-mingw32-g++ -v
       - uses: actions/upload-artifact@v2
         with:
           name: mingw-w64-toolchain

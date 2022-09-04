@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Copyright (C) 2022 Kyle Schwarz <zeranoe@gmail.com>, Toni Uhlig <matzeton@googlemail.com>
 #
@@ -517,28 +517,27 @@ export CFLAGS="-g0"
 export CXXFLAGS="-g0"
 export LDFLAGS="-s"
 
-COMPLETE_MSG="complete, to use MinGW-w64 everywhere add"
-
 if [ "$BUILD_I686" ]; then
     build i686 "$I686_PREFIX"
-    COMPLETE_MSG="$COMPLETE_MSG '$I686_PREFIX/bin'"
 fi
 
 if [ "$BUILD_X86_64" ]; then
     build x86_64 "$X86_64_PREFIX"
-    if [ "$BUILD_I686" ]; then
-        COMPLETE_MSG="$COMPLETE_MSG and "
-    fi
-    COMPLETE_MSG="$COMPLETE_MSG '$X86_64_PREFIX/bin'"
 fi
-
-COMPLETE_MSG="$COMPLETE_MSG to PATH."
 
 if [ ! "$KEEP_ARTIFACTS" ]; then
     remove_path "$SRC_PATH"
     remove_path "$BLD_PATH"
     remove_path "$LOG_FILE"
 fi
+
+cat >${ROOT_PATH}/activate.sh <<EOF
+#!/usr/bin/env bash
+
+MYDIR="\$(realpath \$(dirname \${BASH_SOURCE[0]}))"
+export PATH="\${MYDIR}/i686/bin:\${MYDIR}/x86_64/bin:\${PATH}"
+EOF
+chmod +x ${ROOT_PATH}/activate.sh
 
 if [ ! -z ${TARBALL} ]; then
     if [ "$BUILD_I686" ]; then
@@ -548,9 +547,9 @@ if [ ! -z ${TARBALL} ]; then
         TAR_DIRS="${TAR_DIRS} x86_64"
     fi
     execute "generating tarball ${TARBALL}" "" \
-        cd ${ROOT_PATH} && tar --transform "s,^,mingw-w64-sysroot/," -cjf ${TARBALL} ${TAR_DIRS}
+        cd ${ROOT_PATH} && tar --transform "s,^,mingw-w64-sysroot/," -cjf ${TARBALL} ${TAR_DIRS} activate.sh
 fi
 
-printf "(%d/%d): %s\n" "$CURRENT_STEP" "$TOTAL_STEPS" "$COMPLETE_MSG"
+printf "(%d/%d): %s\n" "$CURRENT_STEP" "$TOTAL_STEPS" "complete, to use MinGW-w64 everywhere run: source ${ROOT_PATH}/activate.sh"
 
 exit 0
