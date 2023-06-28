@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - tmp
   pull_request:
     branches:
       - main
@@ -51,9 +52,17 @@ jobs:
           source ./tmp/mingw-w64-sysroot/activate.sh
           x86_64-w64-mingw32-gcc -v
           x86_64-w64-mingw32-g++ -v
-      - uses: actions/upload-artifact@v2
+      - name: Archive Build Log
+        if: always()
+        uses: actions/upload-artifact@v2
         with:
-          name: mingw-w64-toolchain
+          name: build-log
+          path: $HOME/.mingw-w64-build-ng/build.log
+      - name: Upload Toolchain
+        if: github.event.schedule != '0 13 * * 1'
+        uses: actions/upload-artifact@v2
+        with:
+          if: github.event.schedule != '0 13 * * 1'
           path: |
             ./mingw-w64-toolchain.tbz2
             ./mingw-w64-toolchain.tbz2.sha512
