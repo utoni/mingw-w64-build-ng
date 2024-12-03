@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (C) 2023 Kyle Schwarz <zeranoe@gmail.com>, Toni Uhlig <matzeton@googlemail.com>
+# Copyright (C) 2024 Kyle Schwarz <zeranoe@gmail.com>, Toni Uhlig <matzeton@googlemail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,18 +19,18 @@
 ROOT_PATH="$HOME/.mingw-w64-build-ng"
 
 MINGW_W64_BRANCH="master"
-BINUTILS_BRANCH="binutils-2_40-branch"
-GCC_BRANCH="releases/gcc-12"
+BINUTILS_BRANCH="binutils-2_42-branch"
+GCC_BRANCH="releases/gcc-14"
 
 USE_TARBALL_RELEASES=1
 
-MINGW_W64_TARBALL_VERSION="v9.0.0"
-BINUTILS_TARBALL_VERSION="2.40"
-GCC_TARBALL_VERSION="12.2.0"
+MINGW_W64_TARBALL_VERSION="v11.0.0"
+BINUTILS_TARBALL_VERSION="2.43"
+GCC_TARBALL_VERSION="14.2.0"
 
-MINGW_W64_TARBALL_SHA512="e5726eff24326dd8997c21e0ea3069fc6b8e2b29ba40648f7c0c8b52980d02b96b13d8c00dfa91b16fcd311d1fb83ec879cf2ce57249b7f5069e4af7b93b872a"
-BINUTILS_TARBALL_SHA512="2f141fb842f4cf73f1d161a24aac416aa0383d784b67cfe54d79e3b7ab7b932d0717e3a0d12e88babc1e854d83285ad9af26fe97c3ade32b49f20a86849d5b65"
-GCC_TARBALL_SHA512="9259c6d5c144b76f5159e9b33792bf41b9759ea62f9f85da15761660c434cc98a204208856d12cd8123df35db787e417f15dc4803d45cfd7c79247d612ef53c6"
+MINGW_W64_TARBALL_SHA512="5a0a09a572fcf152ed75c6e7830fd62e6c01decc9cbdba5552d4b9c00eebfa79f98e266ba9e403b184eb5a14bd45b24f5a4c16802a40295464e3323b8f2b11bc"
+BINUTILS_TARBALL_SHA512="27a19e23b2e8be9994f13687a6e0d6fd6db58f2013d4fd7b1c7f098069fbbee59e6500de4ea16b2218df5f23861f7925472081c3baec7a98533431c2d522c7b1"
+GCC_TARBALL_SHA512="5d2fdfc296220cc61ea65eaf35d4f880fa557933f3fa3474b5a37008ce186d33a411e4e06a1107d0a55623001708f80b3755618c63ae6d560ec890147371aa69"
 
 ENABLE_THREADS="--enable-threads=posix"
 
@@ -513,11 +513,17 @@ mkdir -p "$ROOT_PATH"
 rm -f "$LOG_FILE"
 touch "$LOG_FILE"
 
+
 if [ ! "$CACHED_SOURCES" ]; then
     download_sources
+else
+    if [ ! -f "$SRC_PATH/gcc/config.guess" ]; then
+        arg_error "no sources found, run with --keep-artifacts first"
+    fi
 fi
 
 change_dir "$SRC_PATH/gcc"
+BUILD=$(sh "./config.guess")
 
 execute "" "failed to download GCC dependencies" \
     ./contrib/download_prerequisites
@@ -530,16 +536,21 @@ export CFLAGS="-g0"
 export CXXFLAGS="-g0"
 export LDFLAGS="-s"
 
+ADD_TO_PATH=()
+
 if [ "$BUILD_I586" ]; then
     build i586 "$I586_PREFIX"
+    ADD_TO_PATH+=("'$I586_PREFIX/bin'")
 fi
 
 if [ "$BUILD_I686" ]; then
     build i686 "$I686_PREFIX"
+    ADD_TO_PATH+=("'$I686_PREFIX/bin'")
 fi
 
 if [ "$BUILD_X86_64" ]; then
     build x86_64 "$X86_64_PREFIX"
+    ADD_TO_PATH+=("'$X86_64_PREFIX/bin'")
 fi
 
 if [ ! "$KEEP_ARTIFACTS" ]; then
