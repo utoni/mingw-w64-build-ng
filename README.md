@@ -13,7 +13,7 @@ files.
 ## Default Branches
 * [MinGW-w64](https://mingw-w64.org) master
 * [Binutils](https://www.gnu.org/software/binutils/) binutils-2_42-branch
-* [GCC](https://gcc.gnu.org/) releases/gcc-14
+* [GCC](https://gcc.gnu.org/) releases/gcc-12
 
 ## Default Prefix
 `$HOME/.mingw-w64-build-ng/i686` and `$HOME/.mingw-w64-build-ng/x86_64` are the
